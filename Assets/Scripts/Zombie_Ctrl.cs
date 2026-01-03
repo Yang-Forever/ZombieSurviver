@@ -21,12 +21,16 @@ public class Zombie_Ctrl : MonoBehaviour
     private int damage = 10;
     private float moveSpeed = 3.0f;
     private float atkRange = 2.0f;
+    private float atkCool = 1.0f;
+    float atkTimer = 0.0f;
 
     // 현재 상태
     AnimState state = AnimState.idle;
     [HideInInspector] public AnimState curState = AnimState.idle;
     AnimState aiState = AnimState.idle;
     [HideInInspector] public bool isDead = false;
+    bool hasAttacked = false;
+    Player_Ctrl player;
 
     // 애니메이션
     public Anim anim;
@@ -34,7 +38,7 @@ public class Zombie_Ctrl : MonoBehaviour
 
     public Transform target;
 
-    private ZombiePool pool;
+    private ZombiePool pool; 
 
     private void Awake()
     {
@@ -50,6 +54,7 @@ public class Zombie_Ctrl : MonoBehaviour
     void Start()
     {
         target = GameObject.Find("Player").transform;
+        player = target.GetComponent<Player_Ctrl>();
         animator = GetComponentInChildren<Animator>();
         currHp = initHp;
     }
@@ -57,6 +62,12 @@ public class Zombie_Ctrl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (isDead)
+            return;
+
+        if (atkTimer > 0.0f)
+            atkTimer -= Time.deltaTime;
+
         ZombieMove();
     }
 
@@ -122,13 +133,29 @@ public class Zombie_Ctrl : MonoBehaviour
         {
             // 좀비 공격
             ZombieAttack();
-            ChangeAnim(AnimState.attack, 0.12f);
+
         }
     }
 
     void ZombieAttack()
     {
+        if (atkTimer > 0f)
+            return;
 
+        atkTimer = atkCool;
+        hasAttacked = false;
+
+        ChangeAnim(AnimState.attack, 0.12f);
+    }
+    public void OnAtkHit()
+    {
+        if (hasAttacked || isDead)
+            return;
+
+        hasAttacked = true;
+
+        if (player != null)
+            player.HitDamage(damage);
     }
 
     void ChangeAnim(AnimState newState, float crossTime = 0.0f)
@@ -207,6 +234,7 @@ public class Zombie_Ctrl : MonoBehaviour
     public void ResetZombie()
     {
         currHp = initHp;
+        atkTimer = 0.0f;
 
         ChangeAnim(AnimState.idle);
         state = AnimState.idle;

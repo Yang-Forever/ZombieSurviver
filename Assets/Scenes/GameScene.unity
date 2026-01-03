@@ -5204,7 +5204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   expBar: {fileID: 584031712}
-  hpBar: {fileID: 0}
+  hpBar: {fileID: 542126882}
   hpText: {fileID: 0}
 --- !u!114 &1839112925
 MonoBehaviour:

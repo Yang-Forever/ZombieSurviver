@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class ZombieSpawner : MonoBehaviour
 {
@@ -32,28 +33,40 @@ public class ZombieSpawner : MonoBehaviour
 
     void SpawnZombie()
     {
-        if (!player) return;
+        if (!player)
+            return;
 
-        Vector3 randomDir = Random.insideUnitSphere;
-        randomDir.y = 0;
+        int maxTry = 10;
 
-        float dist = Random.Range(minDistance, spawnRadius);
-        Vector3 spawnPos = player.position + randomDir.normalized * dist;
-
-        ZombieType zType;
-
-        // 일반 4마리 스폰 후에 패스트 1마리 스폰
-        if (normalSpawnCounter < 4)
+        for (int i = 0; i < maxTry; i++)
         {
-            zType = ZombieType.Normal;
-            normalSpawnCounter++;
-        }
-        else
-        {
-            zType = ZombieType.Fast;
-            normalSpawnCounter = 0;
-        }
+            Vector3 dir = Random.insideUnitSphere;
+            dir.y = 0;
+            dir.Normalize();
 
-        ZombiePool.Inst.Spawn(zType, spawnPos);
+            float dist = Random.Range(minDistance, spawnRadius);
+
+            Vector3 pos = player.position + dir * dist;
+
+            if (NavMesh.SamplePosition(pos, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+            {
+                ZombieType zType;
+
+                // 일반 4 : 패스트 1
+                if (normalSpawnCounter < 4)
+                {
+                    zType = ZombieType.Normal;
+                    normalSpawnCounter++;
+                }
+                else
+                {
+                    zType = ZombieType.Fast;
+                    normalSpawnCounter = 0;
+                }
+
+                ZombiePool.Inst.Spawn(zType, hit.position);
+                return;
+            }
+        }
     }
 }

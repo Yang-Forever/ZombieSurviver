@@ -23,7 +23,6 @@ public class Player_Ctrl : MonoBehaviour
             return;
 
         MoveKB();
-        //RotateToTarget();
 
         // 수동회전
         RotateMouse();
@@ -77,12 +76,14 @@ public class Player_Ctrl : MonoBehaviour
             return;
 
         PlayerStats.Inst.curHp -= damage;
+        hpBar.fillAmount = PlayerStats.Inst.curHp / PlayerStats.Inst.MaxHp;
 
         if (PlayerStats.Inst.curHp <= 0)
         {
             PlayerStats.Inst.curHp = 0;
 
             // 게임 종료
+            GameMgr.Inst.state = PlayerState.Die;
             Time.timeScale = 0;
         }
     }
