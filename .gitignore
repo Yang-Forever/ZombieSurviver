@@ -22,6 +22,7 @@ UserSettings/
 *.pdb
 *.apk
 *.aab
+*.fbx
 
 .DS_Store
 Thumbs.db
