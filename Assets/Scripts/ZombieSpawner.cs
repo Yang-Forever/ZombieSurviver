@@ -47,31 +47,26 @@ public class ZombieSpawner : MonoBehaviour
     #region 스폰 로직
     void SpawnZombie()
     {
-        if (!player)
+        if (!player) 
             return;
 
-        const int maxTry = 20;
+        const int maxTry = 30;
 
         for (int i = 0; i < maxTry; i++)
         {
-            Vector2 circle = Random.insideUnitCircle.normalized;
+            float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
             float dist = Random.Range(minDistance, spawnRadius);
 
-            Vector3 spawnPos = player.position + new Vector3(circle.x, 0f, circle.y) * dist;
+            Vector3 dir = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+            Vector3 rawPos = player.position + dir * dist;
 
-            if (NavMesh.SamplePosition(spawnPos, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(rawPos, out NavMeshHit hit, 2f, NavMesh.AllAreas))
             {
-                if (Vector3.Distance(hit.position, player.position) < minDistance)
-                    continue;
-
-                ZombieType type = DecideZombieType();
-                ZombiePool.Inst.Spawn(type, hit.position);
+                ZombiePool.Inst.Spawn(DecideZombieType(), hit.position);
                 return;
             }
-
         }
     }
-
 
     ZombieType DecideZombieType()
     {
@@ -94,18 +89,19 @@ public class ZombieSpawner : MonoBehaviour
         difficultyLevel = level;
 
         // 전역 스텟 배율
-        Zombie_Ctrl.HpMultiplier = 1f + level * 0.1f;
-        Zombie_Ctrl.SpeedMultiplier = 1f + level * 0.05f;
-        Zombie_Ctrl.DamageMultiplier = 1f + level * 0.1f;
+        Zombie_Ctrl.NormalHpMul = 1f + level * 0.1f;
+        Zombie_Ctrl.NormalSpeedMul = 1f + level * 0.05f;
+        Zombie_Ctrl.NormalDmgMul = 1f + level * 0.1f;
 
         // 스폰량 증가
         spawnPerSecond = 1.5f + level * 0.5f;
     }
 
-    public void SpawnBoss()
+    public void SpawnBoss(int bossLevel)
     {
         if (!player)
             return;
+        IncreaseBossDifficulty(bossLevel);
 
         const float bossSpawnDist = 18f;
         const int maxTry = 15;
@@ -113,21 +109,22 @@ public class ZombieSpawner : MonoBehaviour
         for (int i = 0; i < maxTry; i++)
         {
             Vector2 dir2D = Random.insideUnitCircle.normalized;
-            Vector3 spawnPos =
-                player.position + new Vector3(dir2D.x, 0f, dir2D.y) * bossSpawnDist;
+            Vector3 spawnPos = player.position + new Vector3(dir2D.x, 0f, dir2D.y) * bossSpawnDist;
 
-            if (NavMesh.SamplePosition(
-                spawnPos,
-                out NavMeshHit hit,
-                2.5f,
-                NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(spawnPos, out NavMeshHit hit, 2.5f, NavMesh.AllAreas))
             {
                 ZombiePool.Inst.SpawnBoss(hit.position);
                 return;
             }
         }
+    }
 
-        Debug.LogWarning("Boss spawn failed (NavMesh)");
+    public void IncreaseBossDifficulty(int level)
+    {
+        // 전역 스텟 배율
+        Zombie_Ctrl.BossHpMul = 1f + level * 0.5f;
+        Zombie_Ctrl.BossSpeedMul = 1f + level * 0.05f;
+        Zombie_Ctrl.BossDmgMul = 1f + level * 0.1f;
     }
 
     public void ResetSpawner()

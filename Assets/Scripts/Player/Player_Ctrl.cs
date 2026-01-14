@@ -16,6 +16,7 @@ public class Player_Ctrl : MonoBehaviour
     int level = 1;
     public Image hpBar;
     public Text hpText;
+    [HideInInspector] public bool isDie = false;
 
     PlayerAnim_Ctrl playerAnim;
 
@@ -24,10 +25,15 @@ public class Player_Ctrl : MonoBehaviour
         playerAnim = GetComponentInChildren<PlayerAnim_Ctrl>();
     }
 
+    private void Start()
+    {
+        UpdateHpUI();
+    }
+
     // Update is called once per frame
     void Update()
     {
-        if (GameMgr.Inst.state != PlayerState.Play)
+        if (GameMgr.Inst.state != PlayerState.Play || isDie)
             return;
 
         MoveKB();
@@ -37,8 +43,6 @@ public class Player_Ctrl : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
             LevelUp();
-
-        hpText.text = PlayerStats.Inst.curHp + " / " + PlayerStats.Inst.MaxHp;
     }
 
     void MoveKB()
@@ -82,12 +86,10 @@ public class Player_Ctrl : MonoBehaviour
 
     public void HitDamage(int damage)
     {
-        if (PlayerStats.Inst.curHp <= 0)
+        if (isDie)
             return;
 
-        float reduction = PlayerStats.Inst.DamageReduction;
-        reduction = Mathf.Clamp01(reduction);
-
+        float reduction = Mathf.Clamp01(PlayerStats.Inst.DamageReduction);
         float finalDamage = damage * (1f - reduction);
 
         PlayerStats.Inst.curHp -= Mathf.RoundToInt(finalDamage);
@@ -97,14 +99,26 @@ public class Player_Ctrl : MonoBehaviour
         if (PlayerStats.Inst.curHp <= 0)
         {
             PlayerStats.Inst.curHp = 0;
-
-            playerAnim.DieAnim();
-
+            UpdateHpUI();
             StartCoroutine(Die());
+            return;
         }
+
+        UpdateHpUI();
     }
+
+    void UpdateHpUI()
+    {
+        hpBar.fillAmount = PlayerStats.Inst.curHp / PlayerStats.Inst.MaxHp;
+
+        hpText.text = $"{PlayerStats.Inst.curHp} / {PlayerStats.Inst.MaxHp}";
+    }
+
     IEnumerator Die()
     {
+        isDie = true;
+        playerAnim.DieAnim();
+
         yield return new WaitForSeconds(3f);
         GameMgr.Inst.GameEnd();
     }
@@ -115,7 +129,7 @@ public class Player_Ctrl : MonoBehaviour
 
         expBar.fillAmount = curExp / maxExp;
 
-        if(curExp >= maxExp)
+        if (curExp >= maxExp)
         {
             LevelUp();
         }
@@ -128,7 +142,7 @@ public class Player_Ctrl : MonoBehaviour
         curExp = 0;
         LevelUpMgr.Inst.Show();
 
-        if(maxExp <= 300)
+        if (maxExp <= 300)
         {
             maxExp *= 2;
         }

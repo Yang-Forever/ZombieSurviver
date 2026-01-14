@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.AI;
-using UnityEditor;
 
 public enum ZombieType
 {
@@ -28,9 +27,13 @@ public class Zombie_Ctrl : MonoBehaviour
     int damage;
 
     [Header("Multiplier")]
-    public static float HpMultiplier = 1f;
-    public static float SpeedMultiplier = 1f;
-    public static float DamageMultiplier = 1f;
+    public static float NormalHpMul = 1f;
+    public static float NormalSpeedMul = 1f;
+    public static float NormalDmgMul = 1f;
+
+    public static float BossHpMul = 1f;
+    public static float BossSpeedMul = 1f;
+    public static float BossDmgMul = 1f;
 
     private float atkRange = 2.0f;
     private float atkCool = 1.0f;
@@ -48,6 +51,7 @@ public class Zombie_Ctrl : MonoBehaviour
     Animator animator = null;
 
     public Transform target;
+    NavMeshAgent agent;
 
     private ZombiePool pool;
 
@@ -78,7 +82,9 @@ public class Zombie_Ctrl : MonoBehaviour
 
     private void Awake()
     {
-        ZombieSetUp();
+        agent = GetComponent<NavMeshAgent>();
+        animator = GetComponentInChildren<Animator>();
+        //ZombieSetUp();
     }
 
     public void SetPool(ZombiePool p)
@@ -91,8 +97,6 @@ public class Zombie_Ctrl : MonoBehaviour
     {
         target = GameObject.Find("Player").transform;
         player = target.GetComponent<Player_Ctrl>();
-        animator = GetComponentInChildren<Animator>();
-        currHp = baseHp;
     }
 
     // Update is called once per frame
@@ -145,43 +149,89 @@ public class Zombie_Ctrl : MonoBehaviour
 
     void ApplyDifficultyStat()
     {
-        maxHp = baseHp * HpMultiplier;
-        currHp = maxHp;
+        if (zomType == ZombieType.Boss)
+        {
+            maxHp = baseHp * BossHpMul;
+            moveSpeed = baseMoveSpeed * BossSpeedMul;
+            damage = Mathf.RoundToInt(baseDamage * BossDmgMul);
+        }
+        else
+        {
+            maxHp = baseHp * NormalHpMul;
+            moveSpeed = baseMoveSpeed * NormalSpeedMul;
+            damage = Mathf.RoundToInt(baseDamage * NormalDmgMul);
+        }
 
-        moveSpeed = baseMoveSpeed * SpeedMultiplier;
-        damage = Mathf.RoundToInt(baseDamage * DamageMultiplier);
+        currHp = maxHp;
     }
 
     #region Zombie Action
+    //void ZombieMove()
+    //{
+    //    if (isDead)
+    //        return;
+
+    //    if (state == AnimState.attack)
+    //        return;
+
+    //    if (state == AnimState.rage)
+    //        return;
+
+    //    Vector3 dir = target.position - transform.position;
+    //    dir.y = 0;
+
+    //    float dist = dir.magnitude;
+
+    //    if (!player.isDie)
+    //    {
+    //        if (dist > atkRange)
+    //        {
+    //            dir.Normalize();
+    //            transform.forward = dir;
+    //            transform.position += dir * moveSpeed * Time.deltaTime;
+
+    //            ChangeAnim(AnimState.trace, 0.12f);
+    //        }
+    //        else
+    //        {
+    //            // 좀비 공격
+    //            ZombieAttack();
+
+    //        }
+    //    }
+    //    else
+    //    {
+    //        ChangeAnim(AnimState.idle, 0.12f);
+    //    }
+    //}
+
     void ZombieMove()
     {
-        if (isDead)
+        if (isDead || player.isDie)
             return;
 
-        if (state == AnimState.attack)
-            return;
-
-        if (state == AnimState.rage)
-            return;
-
-        Vector3 dir = target.position - transform.position;
-        dir.y = 0;
-
-        float dist = dir.magnitude;
+        float dist = Vector3.Distance(transform.position, target.position);
 
         if (dist > atkRange)
         {
-            dir.Normalize();
-            transform.forward = dir;
-            transform.position += dir * moveSpeed * Time.deltaTime;
+            if (!agent.hasPath || Vector3.Distance(agent.destination, target.position) > 0.5f)
+            {
+                agent.SetDestination(target.position);
+            }
+
+            // 이동 방향으로 회전
+            Vector3 vel = agent.velocity;
+            vel.y = 0f;
+
+            if (vel.sqrMagnitude > 0.01f)
+                transform.forward = vel.normalized;
 
             ChangeAnim(AnimState.trace, 0.12f);
         }
         else
         {
-            // 좀비 공격
+            agent.ResetPath();
             ZombieAttack();
-
         }
     }
 
@@ -460,9 +510,10 @@ public class Zombie_Ctrl : MonoBehaviour
 
     public void ResetZombie()
     {
-        ApplyDifficultyStat();
         ZombieSetUp();
+        ApplyDifficultyStat();
 
+        isDead = false;
         atkTimer = 0.0f;
         hasAttacked = false;
 
@@ -485,14 +536,15 @@ public class Zombie_Ctrl : MonoBehaviour
         Collider col = GetComponent<Collider>();
         if (col != null) col.enabled = true;
 
-        NavMeshAgent agent = GetComponent<NavMeshAgent>();
         if (agent != null)
         {
             agent.enabled = true;
+            agent.speed = moveSpeed;
+            agent.stoppingDistance = atkRange - 0.1f;
+            agent.updateRotation = false;
+            agent.updateUpAxis = false;
             agent.ResetPath();
         }
-
-        isDead = false;
     }
 
     void SpawnExp(int value)

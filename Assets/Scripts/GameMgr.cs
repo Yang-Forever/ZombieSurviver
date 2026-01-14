@@ -36,6 +36,9 @@ public class GameMgr : MonoBehaviour
     public GameObject configPanel;
     public Button configCloseBtn;
     public Button ExitBtn;
+    public Button tuto_Btn;
+    public GameObject configTutoPanel;
+    public Button configTutoExit_Btn;
 
     [Header("Difficulty")]
     public int difficultyLevel = 0;
@@ -43,6 +46,7 @@ public class GameMgr : MonoBehaviour
     float nextDifficultyTime = 840f;
 
     [Header("Boss")]
+    int bossLevel = 0;
     float bossInterval = 240f;
     float nextBossTime = 760f;
 
@@ -52,7 +56,7 @@ public class GameMgr : MonoBehaviour
     public Text bestScoreText;
     public Text updateScoreText;
     public Button restart_Btn;
-    public Button goLobby_Btn;
+    public Button goTitle_Btn;
 
     [Header("Tutorial Setting")]
     public GameObject tutorialPanel;
@@ -107,19 +111,22 @@ public class GameMgr : MonoBehaviour
         if (ExitBtn != null)
             ExitBtn.onClick.AddListener(() =>
             {
-                Application.Quit();
+                Time.timeScale = 1;
+                FadeMgr.Inst.LoadScene("TitleScene");
             });
 
         if (restart_Btn != null)
             restart_Btn.onClick.AddListener(() =>
             {
-                SceneManager.LoadScene("GameScene");
+                Time.timeScale = 1;
+                FadeMgr.Inst.LoadScene("GameScene");
             });
 
-        if (goLobby_Btn != null)
-            goLobby_Btn.onClick.AddListener(() =>
+        if (goTitle_Btn != null)
+            goTitle_Btn.onClick.AddListener(() =>
             {
-                SceneManager.LoadScene("LobbyScene");
+                Time.timeScale = 1;
+                FadeMgr.Inst.LoadScene("TitleScene");
             });
 
         if (tutoExit_Btn != null)
@@ -127,6 +134,20 @@ public class GameMgr : MonoBehaviour
             {
                 tutorialPanel.SetActive(false);
                 ChangeState(PlayerState.Play);
+            });
+
+        if (tuto_Btn != null)
+            tuto_Btn.onClick.AddListener(() =>
+            {
+                configTutoPanel.SetActive(true);
+                configPanel.SetActive(false);
+            });
+
+        if (configTutoExit_Btn != null)
+            configTutoExit_Btn.onClick.AddListener(() =>
+            {
+                configTutoPanel.SetActive(false);
+                configPanel.SetActive(true);
             });
 
         ResetGame();
@@ -236,7 +257,9 @@ public class GameMgr : MonoBehaviour
         if (playTime <= nextBossTime)
         {
             nextBossTime -= bossInterval;
-            ZombieSpawner.Inst.SpawnBoss();
+            bossLevel++;
+
+            ZombieSpawner.Inst.SpawnBoss(bossLevel);
         }
     }
 
@@ -253,14 +276,19 @@ public class GameMgr : MonoBehaviour
         killScore = 0;
 
         difficultyLevel = 0;
+        bossLevel = 0;
+
         nextDifficultyTime = 840f;
-        nextBossTime = 760f;
+        nextBossTime = 840f;
 
         PlayerStats.Inst.ResetStats();
 
-        Zombie_Ctrl.HpMultiplier = 1f;
-        Zombie_Ctrl.SpeedMultiplier = 1f;
-        Zombie_Ctrl.DamageMultiplier = 1f;
+        Zombie_Ctrl.NormalHpMul = 1f;
+        Zombie_Ctrl.NormalSpeedMul = 1f;
+        Zombie_Ctrl.NormalDmgMul = 1f;
+        Zombie_Ctrl.BossHpMul = 1f;
+        Zombie_Ctrl.BossSpeedMul = 1f;
+        Zombie_Ctrl.BossDmgMul = 1f;
 
         ZombieSpawner.Inst.ResetSpawner();
 

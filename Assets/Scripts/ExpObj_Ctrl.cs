@@ -1,4 +1,4 @@
-using System.Collections;
+    using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,7 +8,7 @@ public class ExpObj_Ctrl : MonoBehaviour
     private Player_Ctrl playerCtrl;
 
     float rotSpeed = 60.0f;
-    private float moveSpeed = 15f;
+    private float moveSpeed = 30f;
 
     private int expValue = 10;
 
@@ -64,6 +64,8 @@ public class ExpObj_Ctrl : MonoBehaviour
         {
             //ÇÃ·¹ÀÌ¾î Exp È×µæ
             coll.GetComponent<Player_Ctrl>().AddExp(expValue);
+
+            ExpEffectPool.Inst.PlayEffect(transform.position);
 
             ExpPool.Inst.ReturnExp(this);
         }

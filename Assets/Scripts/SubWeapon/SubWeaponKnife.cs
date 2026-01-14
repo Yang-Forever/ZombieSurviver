@@ -43,6 +43,7 @@ public class SubWeaponKnife : SubWeaponBase
             if (hit[i].TryGetComponent(out Zombie_Ctrl zombie))
             {
                 zombie.HitDamage(damage);
+                Debug.Log("hit");
             }
         }
 

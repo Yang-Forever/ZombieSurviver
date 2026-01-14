@@ -13,9 +13,11 @@ public class Explosion_Ctrl : MonoBehaviour
 
         foreach (var col in hits)
         {
+            float dmg = damage * PlayerStats.Inst.DamageMultiplier;
+
             Zombie_Ctrl z = col.GetComponent<Zombie_Ctrl>();
             if (z)
-                z.HitDamage(damage);
+                z.HitDamage(dmg);
         }
 
         Destroy(gameObject, lifeTime);

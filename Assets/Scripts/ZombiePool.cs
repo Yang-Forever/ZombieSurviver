@@ -47,7 +47,7 @@ public class ZombiePool : MonoBehaviour
     void OnGetZombie(Zombie_Ctrl z)
     {
         z.gameObject.SetActive(true);
-        z.ResetZombie();
+        //z.ResetZombie();
     }
 
     void OnReleaseZombie(Zombie_Ctrl z)
@@ -83,10 +83,11 @@ public class ZombiePool : MonoBehaviour
                 z = fastPool.Get();
                 break;
         }
-        z.transform.SetParent(zombiesSpawner);
-
-        z.transform.position = pos;
         z.zomType = type;
+        z.transform.SetParent(zombiesSpawner);
+        z.transform.position = pos;
+
+        z.ResetZombie();
 
         return z;
     }

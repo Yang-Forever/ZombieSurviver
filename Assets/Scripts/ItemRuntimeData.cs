@@ -294,6 +294,11 @@ public class ItemRuntimeData
         if (baseData == null || curLevel <= 0)
             return "";
 
+        if (baseData.itemType != ItemType.Passive && curLevel == 1)
+        {
+            return baseData.baseDesc;
+        }
+
         string temp = baseData.valueDesc;
         string result = temp;
 
@@ -305,7 +310,6 @@ public class ItemRuntimeData
         {
             result = result.Replace("\n받는 피해 {2}% 감소", "")
                            .Replace("\n총알 관통 {2}마리 증가", "");
-
         }
 
         return result
